@@ -15,6 +15,8 @@ Install ganache:
 ## Usage
 Depoly the contracts:
 
+`$ ganache-cli`
+
 `$ cd src/eth`
 
 `$ truffle migrate --reset`
