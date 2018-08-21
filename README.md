@@ -21,7 +21,7 @@ Depoly the contracts:
 
 `$ truffle migrate --reset`
 
-Launch th dApp
+Launch the dApp
 
 `$ cd ../..`
 
