@@ -21,6 +21,8 @@ Depoly the contracts:
 
 `$ truffle migrate --reset`
 
+Launch th dApp
+
 `$ cd ../..`
 
 `$ npm start`
