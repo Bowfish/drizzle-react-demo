@@ -1,4 +1,5 @@
-pragma solidity ^0.4.23;
+//pragma solidity ^0.4.23;
+pragma solidity ^0.5.0;
 
 contract User {
 
@@ -45,7 +46,7 @@ contract User {
       userData.birthDate = birthDate;
     }
 
-    function getUserData() constant public returns(bytes32, bytes32, bytes32, bytes32) {
+    function getUserData() view public returns(bytes32, bytes32, bytes32, bytes32) {
         return (
           userData.firstName,
           userData.lastName,

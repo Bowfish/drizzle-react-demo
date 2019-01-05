@@ -1,5 +1,7 @@
-import EVMRevert from '../helpers/EVMRevert';
-import expectEvent from '../helpers/expectEvent';
+const { expectThrow } = require('../helpers/expectThrow');
+const { EVMRevert } = require('../helpers/EVMRevert');
+const expectEvent = require('../helpers/expectEvent');
+const { ethGetBalance } = require('../helpers/web3');
 
 const BigNumber = web3.BigNumber;
 
@@ -27,17 +29,17 @@ contract('RefundEscrow', function ([owner, beneficiary, refundee1, refundee2]) {
 
     it('does not refund refundees', async function () {
       await this.escrow.deposit(refundee1, { from: owner, value: amount });
-      await this.escrow.withdraw(refundee1).should.be.rejectedWith(EVMRevert);
+      await expectThrow(this.escrow.withdraw(refundee1), EVMRevert);
     });
 
     it('does not allow beneficiary withdrawal', async function () {
       await this.escrow.deposit(refundee1, { from: owner, value: amount });
-      await this.escrow.beneficiaryWithdraw().should.be.rejectedWith(EVMRevert);
+      await expectThrow(this.escrow.beneficiaryWithdraw(), EVMRevert);
     });
   });
 
   it('only owner can enter closed state', async function () {
-    await this.escrow.close({ from: beneficiary }).should.be.rejectedWith(EVMRevert);
+    await expectThrow(this.escrow.close({ from: beneficiary }), EVMRevert);
 
     const receipt = await this.escrow.close({ from: owner });
 
@@ -52,24 +54,24 @@ contract('RefundEscrow', function ([owner, beneficiary, refundee1, refundee2]) {
     });
 
     it('rejects deposits', async function () {
-      await this.escrow.deposit(refundee1, { from: owner, value: amount }).should.be.rejectedWith(EVMRevert);
+      await expectThrow(this.escrow.deposit(refundee1, { from: owner, value: amount }), EVMRevert);
     });
 
     it('does not refund refundees', async function () {
-      await this.escrow.withdraw(refundee1).should.be.rejectedWith(EVMRevert);
+      await expectThrow(this.escrow.withdraw(refundee1), EVMRevert);
     });
 
     it('allows beneficiary withdrawal', async function () {
-      const beneficiaryInitialBalance = await web3.eth.getBalance(beneficiary);
+      const beneficiaryInitialBalance = await ethGetBalance(beneficiary);
       await this.escrow.beneficiaryWithdraw();
-      const beneficiaryFinalBalance = await web3.eth.getBalance(beneficiary);
+      const beneficiaryFinalBalance = await ethGetBalance(beneficiary);
 
       beneficiaryFinalBalance.sub(beneficiaryInitialBalance).should.be.bignumber.equal(amount * refundees.length);
     });
   });
 
   it('only owner can enter refund state', async function () {
-    await this.escrow.enableRefunds({ from: beneficiary }).should.be.rejectedWith(EVMRevert);
+    await expectThrow(this.escrow.enableRefunds({ from: beneficiary }), EVMRevert);
 
     const receipt = await this.escrow.enableRefunds({ from: owner });
 
@@ -84,21 +86,21 @@ contract('RefundEscrow', function ([owner, beneficiary, refundee1, refundee2]) {
     });
 
     it('rejects deposits', async function () {
-      await this.escrow.deposit(refundee1, { from: owner, value: amount }).should.be.rejectedWith(EVMRevert);
+      await expectThrow(this.escrow.deposit(refundee1, { from: owner, value: amount }), EVMRevert);
     });
 
     it('refunds refundees', async function () {
-      for (let refundee of [refundee1, refundee2]) {
-        const refundeeInitialBalance = await web3.eth.getBalance(refundee);
+      for (const refundee of [refundee1, refundee2]) {
+        const refundeeInitialBalance = await ethGetBalance(refundee);
         await this.escrow.withdraw(refundee);
-        const refundeeFinalBalance = await web3.eth.getBalance(refundee);
+        const refundeeFinalBalance = await ethGetBalance(refundee);
 
         refundeeFinalBalance.sub(refundeeInitialBalance).should.be.bignumber.equal(amount);
       }
     });
 
     it('does not allow beneficiary withdrawal', async function () {
-      await this.escrow.beneficiaryWithdraw().should.be.rejectedWith(EVMRevert);
+      await expectThrow(this.escrow.beneficiaryWithdraw(), EVMRevert);
     });
   });
 });

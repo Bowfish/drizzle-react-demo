@@ -1,5 +1,7 @@
-import expectEvent from '../helpers/expectEvent';
-import EVMRevert from '../helpers/EVMRevert';
+const expectEvent = require('../helpers/expectEvent');
+const { expectThrow } = require('../helpers/expectThrow');
+const { EVMRevert } = require('../helpers/EVMRevert');
+const { ethGetBalance } = require('../helpers/web3');
 
 const BigNumber = web3.BigNumber;
 
@@ -7,7 +9,7 @@ require('chai')
   .use(require('chai-bignumber')(BigNumber))
   .should();
 
-export default function (owner, [payee1, payee2]) {
+function shouldBehaveLikeEscrow (owner, [payee1, payee2]) {
   const amount = web3.toWei(42.0, 'ether');
 
   describe('as an escrow', function () {
@@ -15,7 +17,7 @@ export default function (owner, [payee1, payee2]) {
       it('can accept a single deposit', async function () {
         await this.escrow.deposit(payee1, { from: owner, value: amount });
 
-        const balance = await web3.eth.getBalance(this.escrow.address);
+        const balance = await ethGetBalance(this.escrow.address);
         const deposit = await this.escrow.depositsOf(payee1);
 
         balance.should.be.bignumber.equal(amount);
@@ -27,7 +29,7 @@ export default function (owner, [payee1, payee2]) {
       });
 
       it('only the owner can deposit', async function () {
-        await this.escrow.deposit(payee1, { from: payee2 }).should.be.rejectedWith(EVMRevert);
+        await expectThrow(this.escrow.deposit(payee1, { from: payee2 }), EVMRevert);
       });
 
       it('emits a deposited event', async function () {
@@ -41,7 +43,7 @@ export default function (owner, [payee1, payee2]) {
         await this.escrow.deposit(payee1, { from: owner, value: amount });
         await this.escrow.deposit(payee1, { from: owner, value: amount * 2 });
 
-        const balance = await web3.eth.getBalance(this.escrow.address);
+        const balance = await ethGetBalance(this.escrow.address);
         const deposit = await this.escrow.depositsOf(payee1);
 
         balance.should.be.bignumber.equal(amount * 3);
@@ -52,7 +54,7 @@ export default function (owner, [payee1, payee2]) {
         await this.escrow.deposit(payee1, { from: owner, value: amount });
         await this.escrow.deposit(payee2, { from: owner, value: amount * 2 });
 
-        const balance = await web3.eth.getBalance(this.escrow.address);
+        const balance = await ethGetBalance(this.escrow.address);
         const depositPayee1 = await this.escrow.depositsOf(payee1);
         const depositPayee2 = await this.escrow.depositsOf(payee2);
 
@@ -64,14 +66,14 @@ export default function (owner, [payee1, payee2]) {
 
     describe('withdrawals', async function () {
       it('can withdraw payments', async function () {
-        const payeeInitialBalance = await web3.eth.getBalance(payee1);
+        const payeeInitialBalance = await ethGetBalance(payee1);
 
         await this.escrow.deposit(payee1, { from: owner, value: amount });
         await this.escrow.withdraw(payee1, { from: owner });
 
-        const escrowBalance = await web3.eth.getBalance(this.escrow.address);
+        const escrowBalance = await ethGetBalance(this.escrow.address);
         const finalDeposit = await this.escrow.depositsOf(payee1);
-        const payeeFinalBalance = await web3.eth.getBalance(payee1);
+        const payeeFinalBalance = await ethGetBalance(payee1);
 
         escrowBalance.should.be.bignumber.equal(0);
         finalDeposit.should.be.bignumber.equal(0);
@@ -83,7 +85,7 @@ export default function (owner, [payee1, payee2]) {
       });
 
       it('only the owner can withdraw', async function () {
-        await this.escrow.withdraw(payee1, { from: payee1 }).should.be.rejectedWith(EVMRevert);
+        await expectThrow(this.escrow.withdraw(payee1, { from: payee1 }), EVMRevert);
       });
 
       it('emits a withdrawn event', async function () {
@@ -95,4 +97,8 @@ export default function (owner, [payee1, payee2]) {
       });
     });
   });
+}
+
+module.exports = {
+  shouldBehaveLikeEscrow,
 };
